@@ -13,10 +13,15 @@ PREBUILT_DIR = PACKAGE_DIR / "nova-binaries"
 PREBUILT_OS_DIR = PREBUILT_DIR / platform.system()
 BINARIES_DIR = PREBUILT_OS_DIR / "lib"
 LOCAL_BINARIES = BINARIES_DIR / platform.machine()
+INCLUDE_DIR = PREBUILT_DIR / "include"
 
 NOVA_PHYSICS = PACKAGE_DIR / "nova-physics"
 NOVA_PHYSICS_BUILD_SCRIPT = NOVA_PHYSICS / "nova_builder.py"
 NOVA_BUILD_DIRECTORY = NOVA_PHYSICS / "build"
+
+NOVA_PYTHON = PACKAGE_DIR / "nova-physics-python"
+NOVA_PYTHON_STUB = NOVA_PYTHON / "nova.pyi"
+NOVA_PYTHON_SOURCES = NOVA_PYTHON / "src"
 
 if FORCE_BINARIES:
     if not PREBUILT_OS_DIR.exists():
@@ -81,16 +86,37 @@ def get_nova_to_link():
     )
 
 
+def get_nova_sources():
+    sources = [str(NOVA_PYTHON_STUB.relative_to(PACKAGE_DIR))]
+
+    for file in NOVA_PYTHON_SOURCES.iterdir():
+        sources.append(str(file.relative_to(PACKAGE_DIR)))
+
+    return sources
+
+
 def main():
+    nova_to_link = str(get_nova_to_link().relative_to(PACKAGE_DIR))
+    python_stub = str(NOVA_PYTHON_STUB.relative_to(PACKAGE_DIR))
+
     extension = Extension(
         name="nova",
+        sources=get_nova_sources(),
+        include_dirs=[str(INCLUDE_DIR.relative_to(PACKAGE_DIR))],
+        extra_objects=[nova_to_link, python_stub],
+        depends=[nova_to_link],
+        optional=False
     )
     setup(
         name="nova-physics",
         version="0.4.0",
         description="Nova Physics Python bindings",
         long_description=README.read_text(),
-        ext_modules=[extension]
+        long_description_content_type="text/markdown",
+        ext_modules=[extension],
+        package_data={
+            "": [python_stub]
+        }
     )
 
 
