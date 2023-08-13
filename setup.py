@@ -106,7 +106,7 @@ def main():
         include_dirs=[str(INCLUDE_DIR.relative_to(PACKAGE_DIR)), str(NOVA_PYTHON_SOURCES.relative_to(PACKAGE_DIR))],
         # A dirty trick, for not-so-conventional implementation nova-python bindings.
         extra_compile_args=["-Wno-format-security"],
-        extra_objects=[nova_to_link, python_stub],
+        extra_objects=[nova_to_link],
         depends=[nova_to_link],
         optional=False
     )
