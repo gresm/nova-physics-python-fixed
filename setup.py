@@ -87,10 +87,11 @@ def get_nova_to_link():
 
 
 def get_nova_sources():
-    sources = [str(NOVA_PYTHON_STUB.relative_to(PACKAGE_DIR))]
+    sources = []
 
     for file in NOVA_PYTHON_SOURCES.iterdir():
-        sources.append(str(file.relative_to(PACKAGE_DIR)))
+        if file.suffix == ".c":
+            sources.append(str(file.relative_to(PACKAGE_DIR)))
 
     return sources
 
@@ -102,7 +103,9 @@ def main():
     extension = Extension(
         name="nova",
         sources=get_nova_sources(),
-        include_dirs=[str(INCLUDE_DIR.relative_to(PACKAGE_DIR))],
+        include_dirs=[str(INCLUDE_DIR.relative_to(PACKAGE_DIR)), str(NOVA_PYTHON_SOURCES.relative_to(PACKAGE_DIR))],
+        # A dirty trick, for not-so-conventional implementation nova-python bindings.
+        extra_compile_args=["-Wno-format-security"],
         extra_objects=[nova_to_link, python_stub],
         depends=[nova_to_link],
         optional=False
