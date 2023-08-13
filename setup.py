@@ -16,6 +16,7 @@ LOCAL_BINARIES = BINARIES_DIR / platform.machine()
 
 NOVA_PHYSICS = PACKAGE_DIR / "nova-physics"
 NOVA_PHYSICS_BUILD_SCRIPT = NOVA_PHYSICS / "nova_builder.py"
+NOVA_BUILD_DIRECTORY = NOVA_PHYSICS / "build"
 
 if FORCE_BINARIES:
     if not PREBUILT_OS_DIR.exists():
@@ -30,14 +31,6 @@ def use_binaries():
     return PREBUILT_OS_DIR.exists() and LOCAL_BINARIES.exists()
 
 
-def get_nova_to_link():
-    if use_binaries():
-        for path in LOCAL_BINARIES.iterdir():
-            if path.stem == "libnova":
-                return path
-    # TODO: what if libraries are built manually?
-
-
 def run_nova_builder(*args: str):
     path = Path.cwd()
     os.chdir(NOVA_PHYSICS)
@@ -47,13 +40,45 @@ def run_nova_builder(*args: str):
 
 
 def build_nova_physics():
-    if not use_binaries():
-        code = run_nova_builder("-q", "build")
-        if code != 0:
-            raise RuntimeError(
-                f"Builder script returned non-zero ({code}) error code. For troubleshooting guide, go to "
-                f"https://github.com/gresm/nova-physics-python-fixed/blob/master/troubleshooting-guide.md"
-            )
+    code = run_nova_builder("-q", "build")
+    if code != 0:
+        raise RuntimeError(
+            f"Builder script returned non-zero ({code}) error code. For troubleshooting guide, go to "
+            f"https://github.com/gresm/nova-physics-python-fixed/blob/master/troubleshooting-guide.md"
+        )
+
+
+def get_nova_to_link():
+    if use_binaries():
+        for path in LOCAL_BINARIES.iterdir():
+            if path.stem == "libnova":
+                return path
+
+    build_nova_physics()
+
+    if not NOVA_BUILD_DIRECTORY.exists():
+        raise RuntimeError(
+            "Building nova-physics from source failed. For troubleshooting guide, go to "
+            f"https://github.com/gresm/nova-physics-python-fixed/blob/master/troubleshooting-guide.md"
+        )
+
+    to_link = NOVA_BUILD_DIRECTORY / f"libnova_{platform.machine()}"
+
+    if not to_link.exists():
+        raise RuntimeError(
+            f"No built binaries found for architecture {platform.machine()}. For troubleshooting guide, go to "
+            f"https://github.com/gresm/nova-physics-python-fixed/blob/master/troubleshooting-guide.md"
+        )
+
+    for path in to_link.iterdir():
+        if path.stem == "libnova":
+            return path
+
+    raise RuntimeError(
+        f"This should not happen: no proper binary was found in {to_link} and yet the directory was created. "
+        f"For troubleshooting guide, go to "
+        f"https://github.com/gresm/nova-physics-python-fixed/blob/master/troubleshooting-guide.md"
+    )
 
 
 def main():
