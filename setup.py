@@ -2,6 +2,7 @@ import os
 import platform
 from pathlib import Path
 from setuptools import setup, Extension
+from warnings import warn
 
 FORCE_BINARIES = "NOVA_FORCE" in os.environ and os.environ["NOVA_FORCE"].lower() == "binaries"
 FORCE_BUILD_SOURCE = "NOVA_FORCE" in os.environ and os.environ["NOVA_FORCE"].lower() == "source"
@@ -31,6 +32,14 @@ if FORCE_BINARIES:
         raise RuntimeError(f"No binary distribution found for {platform.system()} operating system.")
     elif not LOCAL_BINARIES.exists():
         raise RuntimeError(f"Not supported {platform.machine()} architecture for binaries.")
+
+if len(list(NOVA_PHYSICS.iterdir())) == 0 or len(list(NOVA_PYTHON.iterdir())) == 0:
+    warn("Submodules not initialized, performing additional cloning.")
+    if platform.system() == "Windows":
+        os.system("git.exe submodule init")
+        os.system("git.exe submodule update")
+    else:
+        os.system("git submodule init && git submodule update")
 
 
 def use_binaries():
@@ -103,7 +112,10 @@ def get_nova_sources():
 
 def main():
     nova_to_link = str(get_nova_to_link().relative_to(PACKAGE_DIR))
-    local_stubs = []
+    stubs_to_override = {REAL_PACKAGE / "__init__.pyi": NOVA_PYTHON_STUB, REAL_PACKAGE / "_nova.pyi": NOVA_PYTHON_STUB}
+
+    for write_to, read_from in stubs_to_override.items():
+        write_to.write_text(read_from.read_text())
 
     extension = Extension(
         name="nova._nova",
