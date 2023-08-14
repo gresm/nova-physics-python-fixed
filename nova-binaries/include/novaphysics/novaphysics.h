@@ -15,7 +15,7 @@
 /**
  * @file novaphysics.h
  * 
- * Main Nova Physics API
+ * @brief Main Nova Physics API.
  */
 
 
@@ -25,7 +25,7 @@
 
 // Version in MAJOR.MINOR.PATCH format
 #define NV_VERSION_MAJOR 0
-#define NV_VERSION_MINOR 4
+#define NV_VERSION_MINOR 5
 #define NV_VERSION_PATCH 0
 // Version string
 #define NV_VERSTR                          \
@@ -34,15 +34,15 @@
         NV_STRINGIFY(NV_VERSION_PATCH)
 
 
+// Include the Nova Physics API
 #include "novaphysics/internal.h"
-
 #include "novaphysics/vector.h"
 #include "novaphysics/math.h"
 #include "novaphysics/aabb.h"
 #include "novaphysics/array.h"
 #include "novaphysics/constants.h"
 #include "novaphysics/material.h"
-
+#include "novaphysics/broadphase.h"
 #include "novaphysics/space.h"
 #include "novaphysics/body.h"
 #include "novaphysics/constraint.h"
@@ -50,7 +50,8 @@
 #include "novaphysics/contact.h"
 #include "novaphysics/solver.h"
 #include "novaphysics/resolution.h"
-
+#include "novaphysics/hashmap.h"
+#include "novaphysics/shg.h"
 #include "novaphysics/debug.h"
 
 

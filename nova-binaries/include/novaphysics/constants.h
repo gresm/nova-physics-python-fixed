@@ -15,9 +15,9 @@
 
 
 /**
- * constants.h
+ * @file constants.h
  * 
- * Constants
+ * @brief Various constants used in the Nova Physics Engine.
  */
 
 
@@ -47,6 +47,9 @@
 #define NV_GRAV_JUPITER 24.5
 #define NV_GRAV_SUN 275.0
 #define NV_GRAV_VOID 0.0
+
+
+#define NV_HASHMAP_CAPACITY 16 // Default capacity of hash maps.
 
 
 #endif

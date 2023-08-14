@@ -12,178 +12,144 @@
 #define NOVAPHYSICS_BODY_H
 
 #include <stdlib.h>
+#include <stdint.h>
 #include "novaphysics/internal.h"
 #include "novaphysics/array.h"
 #include "novaphysics/vector.h"
 #include "novaphysics/aabb.h"
 #include "novaphysics/material.h"
+#include "novaphysics/math.h"
+#include "novaphysics/shape.h"
 
 
 /**
- * body.h
+ * @file body.h
  * 
- * Body, body array and helper functions
- */
-
-
-/**
- * @brief Body shape enumerator
+ * @brief Body struct and methods.
  * 
- * @param CIRCLE Circle shape
- * @param POLYGON Convex polygon shape
+ * This module defines body enums, Body struct and its methods and some helper
+ * functions to create body objects.
  */
-typedef enum {
-    nv_BodyShape_CIRCLE,
-    nv_BodyShape_POLYGON
-} nv_BodyShape;
 
 
 /**
  * @brief Body type enumerator
- * 
- * @param STATIC Static body with infinite mass and inertia in theory
- * @param DYNAMIC Dsynamic body
  */
 typedef enum {
-    nv_BodyType_STATIC,
-    nv_BodyType_DYNAMIC
+    nv_BodyType_STATIC, /**< Static body has infinite mass and infinite moment
+                             of inertia in theory. Its position or velocity
+                             doesn't change throughout the simulation.*/
+
+    nv_BodyType_DYNAMIC /**< Dynamic body has its mass and moment of inertia
+                             calculated initially and it's not recommended to
+                             change those values as it can result in inaccurate
+                             simulation. It is affected by every force and constraint
+                             in the space. */
 } nv_BodyType;
 
 
 /**
- * @brief Body struct. You should not create this manually,
- *        use helpers like nv_CircleBody_new or nv_PolygonBody_new
+ * @brief Body struct.
  * 
- * @param space Space object body is in
- * 
- * @param type Type of the body (static or dynamic)
- * @param shape Shape of the body
- * 
- * @param position Position of the body
- * @param angle Angle of the body in radians
- * 
- * @param linear_velocity Linear velocity of the body
- * @param angular_velocity Angular velocity of the body
- * 
- * @param linear_pseudo Pseudo-linear velocity used to correct position
- * @param angular_pseudo Pseudo-angular velocity used to correct position
- * 
- * @param linear_damping Linear velocity damping (reducing over time)
- * @param angular_damping Angular velocity damping (reducing over time)
- * 
- * @param force Force applied on the body
- * @param torque Torque applied on the body
- * 
- * @param material Material of the body
- * 
- * @param mass Mass of the body
- * @param mass Inverse mass of the body (1/mass)
- * @param inertia Moment of inertia of the body
- * @param invinertia Inverse moment of inertia of the body (1/inertia)
- * 
- * @param is_sleeping Is the body sleeping?
- * @param sleep_counter Amount of ticks passed since body's awakening
- * 
- * @param is_attractor Is the body an attractor?
- * 
- * @param radius Internal value for circle bodies
- * @param vertices Internal value for polygon bodies
- * @param trans_vertices Internal value for polygon bodies
+ * A rigid body is a non deformable object with mass in space. It can be affected
+ * by various forces and constraints depending on its type.
  */
 typedef struct {
-    struct _nv_Space *space;
+    struct nv_Space *space; /**< Space object the body is in. */
 
-    nv_BodyType type;
-    nv_BodyShape shape;
+    nv_BodyType type; /**< Type of the body. */
+    nv_Shape *shape; /**< Shape of the body. */
 
-    nv_Vector2 position;
-    nv_float angle;
+    nv_Vector2 position; /**< Position of the body. */
+    nv_float angle; /**< Rotation of the body in radians. */
+    nv_Mat22 u;
 
-    nv_Vector2 linear_velocity;
-    nv_float angular_velocity;
+    nv_Vector2 linear_velocity; /**< Linear velocity of the body. */
+    nv_float angular_velocity; /**< Angular velocity of the bodyin radians/s. */
 
     nv_Vector2 linear_pseudo;
     nv_float angular_pseudo;
 
-    nv_float linear_damping;
-    nv_float angular_damping;
+    nv_float linear_damping; /**< Amount of damping applied to linear velocity of the body. */
+    nv_float angular_damping; /**< Amount of damping applied to angular velocity of the body. */
 
-    nv_Vector2 force;
-    nv_float torque;
+    nv_Vector2 force; /**< Force applied on the body. This is reset every space step. */
+    nv_float torque; /**< Torque applied on the body. This is reset every space step. */
     
-    nv_Material material;
+    nv_Material material; /**< Material of the body. */
 
-    nv_float mass;
-    nv_float invmass;
-    nv_float inertia;
-    nv_float invinertia;
+    nv_float mass; /**< Mass of the body. */
+    nv_float invmass; /**< Inverse mass of the body (1/M). Used in internal calculations. */
+    nv_float inertia; /**< Moment of ineartia of the body. */
+    nv_float invinertia; /**< Inverse moment of inertia of the body (1/I). Used in internal calculations. */
 
-    bool is_sleeping;
-    int sleep_timer;
+    bool is_sleeping; /**< Flag reporting if the body is sleeping. */
+    int sleep_timer; /**< Internal sleep counter of the body. */
 
-    bool is_attractor;
+    bool is_attractor; /**< Flag reporting if the body is an attractor. */
 
     bool collision;
 
-    union {
-        // For circle body
-        nv_float radius;
-
-        // For polygon body
-        struct {
-            nv_Array *vertices;
-            nv_Array *trans_vertices;
-        };
-    };
+    nv_uint16 id; /**< Unique identity number of the body. */
 } nv_Body;
 
 /**
- * @brief Create a new body. You should not use this method manually,
- *        use helpers like nv_CircleBody_new or nv_PolygonBody_new
+ * @brief Create a new body.
+ * 
+ * @note Instead of using this method and creating the shape manually, you can
+ *       use helper constructors @ref nv_Circle_new, @ref nv_Polygon_new or @ref nv_Rect_new.
  * 
  * @param type Type of the body
  * @param shape Shape of the body
- * 
  * @param position Position of the body
  * @param angle Angle of the body in radians
- * 
  * @param material Material of the body
- * @param area Area of the body shape
  * 
- * @param radius Radius of the body if the shape is circle, else NULL
- * @param vertices Vertices of the body if the shape is polygon, else NULL
- * 
- * @return nv_Body* 
+ * @return nv_Body * 
  */
 nv_Body *nv_Body_new(
     nv_BodyType type,
-    nv_BodyShape shape,
+    nv_Shape *shape,
     nv_Vector2 position,
     nv_float angle,
-    nv_Material material,
-    nv_float radius,
-    nv_Array *vertices
+    nv_Material material
 );
 
 /**
- * @brief Free body
+ * @brief Free body.
  * 
  * @param body Body to free
  */
 void nv_Body_free(void *body);
 
 /**
- * @brief Calculate and update mass and moment of inertia of the body
+ * @brief Calculate and update mass and moment of inertia of the body.
  * 
  * @param body Body to calculate masses of
  */
 void nv_Body_calc_mass_and_inertia(nv_Body *body);
 
 /**
- * @brief Integrate linear & angular accelerations
+ * @brief Set mass (and moment of inertia) of the body.
+ * 
+ * @param body Body
+ * @param mass Mass
+ */
+void nv_Body_set_mass(nv_Body *body, nv_float mass);
+
+/**
+ * @brief Set moment of inertia of the body.
+ * 
+ * @param body Body
+ * @param inertia Moment of inertia
+ */
+void nv_Body_set_inertia(nv_Body *body, nv_float inertia);
+
+/**
+ * @brief Integrate linear & angular accelerations.
  * 
  * @param body Body to integrate accelerations of
- * @param dt Time step length (delta time)
+ * @param dt Time step size (delta time)
  */
 void nv_Body_integrate_accelerations(
     nv_Body *body,
@@ -192,24 +158,24 @@ void nv_Body_integrate_accelerations(
 );
 
 /**
- * @brief Integrate linear & angular velocities
+ * @brief Integrate linear & angular velocities.
  * 
  * @param body Body to integrate velocities of
- * @param dt Time step length (delta time)
+ * @param dt Time step size (delta time)
  */
 void nv_Body_integrate_velocities(nv_Body *body, nv_float dt);
 
 /**
- * @brief Apply attractive force to body towards attractor bdoy
+ * @brief Apply attractive force to body towards attractor body.
  * 
  * @param body Body
  * @param attractor Attractor body 
- * @param dt Time step length (delta time)
+ * @param dt Time step size (delta time)
  */
 void nv_Body_apply_attraction(nv_Body *body, nv_Body *attractor);
 
 /**
- * @brief Apply force to body at its center of mass
+ * @brief Apply force to body at its center of mass.
  * 
  * @param body Body to apply force on
  * @param force Force
@@ -217,7 +183,7 @@ void nv_Body_apply_attraction(nv_Body *body, nv_Body *attractor);
 void nv_Body_apply_force(nv_Body *body, nv_Vector2 force);
 
 /**
- * @brief Apply force to body at some local point
+ * @brief Apply force to body at some local point.
  * 
  * @param body Body to apply force on
  * @param force Force
@@ -230,7 +196,9 @@ void nv_Body_apply_force_at(
 );
 
 /**
- * @brief Apply impulse to body at some local point
+ * @brief Apply impulse to body at some local point.
+ * 
+ * @note This method is mainly used internally by the engine.
  * 
  * @param body Body to apply impulse on
  * @param impulse Impulse
@@ -243,7 +211,9 @@ void nv_Body_apply_impulse(
 );
 
 /**
- * @brief Apply pseudo-impulse to body at some local point
+ * @brief Apply pseudo-impulse to body at some local point.
+ * 
+ * @note This method is mainly used internally by the engine.
  * 
  * @param body Body to apply impulse on
  * @param impulse Pseudo-impulse
@@ -256,21 +226,21 @@ void nv_Body_apply_pseudo_impulse(
 );
 
 /**
- * @brief Sleep body
+ * @brief Sleep body.
  * 
  * @param body Body
  */
 void nv_Body_sleep(nv_Body *body);
 
 /**
- * @brief Awake body
+ * @brief Awake body.
  * 
  * @param body Body
  */
 void nv_Body_awake(nv_Body *body);
 
 /**
- * @brief Get axis-aligned bounding box of body (in Joules)
+ * @brief Get AABB (Axis-Aligned Bounding Box) of the body.
  * 
  * @param body Body to get AABB of
  * @return nv_AABB 
@@ -278,7 +248,7 @@ void nv_Body_awake(nv_Body *body);
 nv_AABB nv_Body_get_aabb(nv_Body *body);
 
 /**
- * @brief Get kinetic energy of body (in Joules)
+ * @brief Get kinetic energy of the body in joules.
  * 
  * @param body Body
  * @return nv_float 
@@ -286,7 +256,7 @@ nv_AABB nv_Body_get_aabb(nv_Body *body);
 nv_float nv_Body_get_kinetic_energy(nv_Body *body);
 
 /**
- * @brief Get rotational kinetic energy of the body
+ * @brief Get rotational kinetic energy of the body in joules.
  * 
  * @param body Body
  * @return nv_float 

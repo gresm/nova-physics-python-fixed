@@ -14,13 +14,15 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <math.h>
 
 
 /**
  * @file internal.h
  * 
- * Nova Physics type definitions, utility functions and forward declarations
+ * @brief Nova Physics type definitions, utility functions
+ *        and forward declarations.
  */
 
 
@@ -33,7 +35,6 @@
  * to compiler if building from scratch (which should not be the case)
  */
 
-
 #ifdef NV_USE_FLOAT
 
     typedef float nv_float;
@@ -45,6 +46,7 @@
     #define nv_sqrt sqrtf
     #define nv_sin sinf
     #define nv_cos cosf
+    #define nv_floor floorf
 
 #else
 
@@ -57,11 +59,26 @@
     #define nv_sqrt sqrt
     #define nv_sin sin
     #define nv_cos cos
+    #define nv_floor floor
 
 #endif
 
 
-struct _nv_Space;
+/*
+    Nova Physics integer types
+*/
+typedef int8_t nv_int8;
+typedef int16_t nv_int16;
+typedef int32_t nv_int32;
+typedef int64_t nv_int64;
+typedef uint8_t nv_uint8;
+typedef uint16_t nv_uint16;
+typedef uint32_t nv_uint32;
+typedef uint64_t nv_uint64;
+
+
+// This is forward declared to prevent circular includes
+struct nv_Space;
 
 
 // Utility macro to create objects on HEAP

@@ -18,9 +18,9 @@
 
 
 /**
- * contact.h
+ * @file contact.h
  * 
- * Contact point calculation functions
+ * @brief Contact point calculation functions.
  */
 
 
