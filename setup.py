@@ -125,6 +125,7 @@ def main():
         long_description=README.read_text(),
         long_description_content_type="text/markdown",
         ext_modules=[extension],
+        include_package_data=True,
         package_data={
             "": [python_stub]
         }
