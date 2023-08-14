@@ -42,7 +42,7 @@ def use_binaries():
 def run_nova_builder(*args: str):
     path = Path.cwd()
     os.chdir(NOVA_PHYSICS)
-    ret = os.system(f"python {NOVA_PHYSICS_BUILD_SCRIPT} {' '.join(args)}")
+    ret = os.system(f"python {NOVA_PHYSICS_BUILD_SCRIPT} {' '.join(args)} -fPIC")
     os.chdir(path)
     return ret
 
