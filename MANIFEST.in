@@ -1,1 +1,1 @@
-include nova-physics-python/nova.pyi
+include nova/*.pyi

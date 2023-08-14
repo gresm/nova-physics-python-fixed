@@ -24,6 +24,8 @@ NOVA_PYTHON = PACKAGE_DIR / "nova-physics-python"
 NOVA_PYTHON_STUB = NOVA_PYTHON / "nova.pyi"
 NOVA_PYTHON_SOURCES = NOVA_PYTHON / "src"
 
+REAL_PACKAGE = PACKAGE_DIR / "nova"
+
 if FORCE_BINARIES:
     if not PREBUILT_OS_DIR.exists():
         raise RuntimeError(f"No binary distribution found for {platform.system()} operating system.")
@@ -101,10 +103,10 @@ def get_nova_sources():
 
 def main():
     nova_to_link = str(get_nova_to_link().relative_to(PACKAGE_DIR))
-    python_stub = str(NOVA_PYTHON_STUB.relative_to(PACKAGE_DIR))
+    local_stubs = []
 
     extension = Extension(
-        name="nova",
+        name="nova._nova",
         sources=get_nova_sources(),
         include_dirs=[str(INCLUDE_DIR.relative_to(PACKAGE_DIR)), str(NOVA_PYTHON_SOURCES.relative_to(PACKAGE_DIR))],
         # A dirty trick, for not-so-conventional implementation nova-python bindings.
@@ -127,8 +129,9 @@ def main():
         ext_modules=[extension],
         include_package_data=True,
         package_data={
-            "": [python_stub]
-        }
+            "nova": ["*.pyi"]
+        },
+        packages=["nova"]
     )
 
 
