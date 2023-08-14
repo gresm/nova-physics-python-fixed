@@ -3,7 +3,8 @@ import platform
 from pathlib import Path
 from setuptools import setup, Extension
 
-FORCE_BINARIES = "FORCE_NOVA_BINARIES" in os.environ
+FORCE_BINARIES = "NOVA_FORCE" in os.environ and os.environ["NOVA_FORCE"].lower() == "binaries"
+FORCE_BUILD_SOURCE = "NOVA_FORCE" in os.environ and os.environ["NOVA_FORCE"].lower() == "source"
 
 PACKAGE_DIR = Path(__file__).parent
 
@@ -33,6 +34,8 @@ if FORCE_BINARIES:
 def use_binaries():
     if FORCE_BINARIES:
         return True
+    if FORCE_BUILD_SOURCE:
+        return False
     return PREBUILT_OS_DIR.exists() and LOCAL_BINARIES.exists()
 
 
@@ -107,9 +110,14 @@ def main():
         # A dirty trick, for not-so-conventional implementation nova-python bindings.
         extra_compile_args=["-Wno-format-security"],
         extra_objects=[nova_to_link],
-        depends=[nova_to_link],
         optional=False
     )
+
+    print(
+        "See https://github.com/gresm/nova-physics-python-fixed/blob/master/troubleshooting-guide.md if error occurred "
+        "to see whether there is solution for your problem."
+    )
+
     setup(
         name="nova-physics",
         version="0.4.0",

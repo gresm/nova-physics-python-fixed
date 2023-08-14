@@ -12,10 +12,9 @@ This is re-packaged Nova Physics Python bindings, as currently official bindings
 
 Install with ``pip install git+https://github.com/gresm/nova-physics-python-fixed.git``
 
-The command will build the [Nova Physics](https://github.com/kadir014/nova-physics) from source, if you want to use pre-build Nova binaries run:
-``FORCE_NOVA_BINARIES="" pip install git+https://github.com/gresm/nova-physics-python-fixed.git``
-Binaries can be found [here](nova-binaries) but currently only for Linux x86/x86_64.
-They originate from the Nova Physics repository and can be downloaded [here](https://github.com/kadir014/nova-physics/releases/download/0.5.0/nova-physics-0.5.0-devel.tar.gz)
+The command will try to use the [Nova Physics](https://github.com/kadir014/nova-physics) binaries and fall-backs if none found, if you want to force usage pre-build Nova binaries run:
+``NOVA_FORCE="binaries" pip install git+https://github.com/gresm/nova-physics-python-fixed.git``
+Binaries can be found [here](nova-binaries) but currently only for Linux x86/x86_64. To force building from source run ``NOVA_FORCE="source" pip install git+https://github.com/gresm/nova-physics-python-fixed.git`` 
 
 The package will be installed under ``nova-physics`` namespace, but to import it in python use ``import nova``. Uninstalling is simple as ``pip uninstall nova-physics``.
 
