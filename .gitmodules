@@ -1,6 +1,6 @@
 [submodule "nova-physics"]
 	path = nova-physics
 	url = https://github.com/kadir014/nova-physics.git
-[submodule "nova-physics-python/"]
+[submodule "nova-physics-python"]
 	path = nova-physics-python
 	url = https://github.com/gresm/nova-physics-python.git
