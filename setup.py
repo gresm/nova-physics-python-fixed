@@ -1,7 +1,8 @@
 import os
+import shutil
 import platform
 from pathlib import Path
-from setuptools import setup, Extension
+from setuptools import setup, Extension, Command
 from warnings import warn
 
 FORCE_BINARIES = "NOVA_FORCE" in os.environ and os.environ["NOVA_FORCE"].lower() == "binaries"
@@ -27,19 +28,62 @@ NOVA_PYTHON_SOURCES = NOVA_PYTHON / "src"
 
 REAL_PACKAGE = PACKAGE_DIR / "nova"
 
-if FORCE_BINARIES:
-    if not PREBUILT_OS_DIR.exists():
-        raise RuntimeError(f"No binary distribution found for {platform.system()} operating system.")
-    elif not LOCAL_BINARIES.exists():
-        raise RuntimeError(f"Not supported {platform.machine()} architecture for binaries.")
 
-if len(list(NOVA_PHYSICS.iterdir())) == 0 or len(list(NOVA_PYTHON.iterdir())) == 0:
-    warn("Submodules not initialized, performing additional cloning.")
-    if platform.system() == "Windows":
-        os.system("git.exe submodule init")
-        os.system("git.exe submodule update")
-    else:
-        os.system("git submodule init && git submodule update")
+def create_if_none(path: Path):
+    if not path.exists():
+        path.mkdir()
+
+
+class UpdateBinariesCommand(Command):
+    rebuild_binaries: bool
+
+    user_options = [("rebuild-binaries=", None, "Whether to build nova-physics from scratch.")]
+    description = "Update binaries for distribution"
+
+    def finalize_options(self) -> None:
+        if isinstance(self.rebuild_binaries, str):
+            if self.rebuild_binaries.lower() == "false":
+                self.rebuild_binaries = False
+            else:
+                self.rebuild_binaries = True
+
+    def run(self) -> None:
+        if self.rebuild_binaries:
+            build_nova_physics()
+
+        create_if_none(PREBUILT_OS_DIR)
+
+        create_if_none(BINARIES_DIR)
+
+        for path in NOVA_BUILD_DIRECTORY.iterdir():
+            if path.is_dir() and path.name.startswith("libnova_"):
+                dir_name = BINARIES_DIR / path.name.split("_", 1)[1]
+                create_if_none(dir_name)
+
+                for to_copy in path.iterdir():
+                    if to_copy.is_dir():
+                        shutil.copytree(to_copy, dir_name)
+                    else:
+                        shutil.copy(to_copy, dir_name)
+
+    def initialize_options(self) -> None:
+        self.rebuild_binaries = True
+
+
+def innit_checks():
+    if FORCE_BINARIES:
+        if not PREBUILT_OS_DIR.exists():
+            raise RuntimeError(f"No binary distribution found for {platform.system()} operating system.")
+        elif not LOCAL_BINARIES.exists():
+            raise RuntimeError(f"Not supported {platform.machine()} architecture for binaries.")
+
+    if len(list(NOVA_PHYSICS.iterdir())) == 0 or len(list(NOVA_PYTHON.iterdir())) == 0:
+        warn("Submodules not initialized, performing additional cloning.")
+        if platform.system() == "Windows":
+            os.system("git.exe submodule init")
+            os.system("git.exe submodule update")
+        else:
+            os.system("git submodule init && git submodule update")
 
 
 def use_binaries():
@@ -111,6 +155,8 @@ def get_nova_sources():
 
 
 def main():
+    innit_checks()
+
     nova_to_link = str(get_nova_to_link().relative_to(PACKAGE_DIR))
     stubs_to_override = {REAL_PACKAGE / "__init__.pyi": NOVA_PYTHON_STUB, REAL_PACKAGE / "_nova.pyi": NOVA_PYTHON_STUB}
 
@@ -143,7 +189,8 @@ def main():
         package_data={
             "nova": ["*.pyi"]
         },
-        packages=["nova"]
+        packages=["nova"],
+        cmdclass={"update_binaries": UpdateBinariesCommand}
     )
 
 
