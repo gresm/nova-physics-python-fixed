@@ -1,8 +1,14 @@
+import sys
+from typing import Type
+
 import os
 import shutil
+import tarfile
 import platform
 from pathlib import Path
 from setuptools import setup, Extension, Command
+from setuptools.command import build_ext
+from distutils.core import Command as DistCommand
 from warnings import warn
 
 FORCE_BINARIES = "NOVA_FORCE" in os.environ and os.environ["NOVA_FORCE"].lower() == "binaries"
@@ -35,20 +41,20 @@ def create_if_none(path: Path):
 
 
 class UpdateBinariesCommand(Command):
-    rebuild_binaries: bool
+    build_binaries: bool
 
-    user_options = [("rebuild-binaries=", None, "Whether to build nova-physics from scratch.")]
+    user_options = [("dont-build-binaries=", None, "Whether to build nova-physics from scratch.")]
     description = "Update binaries for distribution"
 
     def finalize_options(self) -> None:
-        if isinstance(self.rebuild_binaries, str):
-            if self.rebuild_binaries.lower() == "false":
-                self.rebuild_binaries = False
+        if isinstance(self.build_binaries, str):
+            if self.build_binaries.lower() == "false":
+                self.build_binaries = False
             else:
-                self.rebuild_binaries = True
+                self.build_binaries = True
 
     def run(self) -> None:
-        if self.rebuild_binaries:
+        if self.build_binaries:
             build_nova_physics()
 
         create_if_none(PREBUILT_OS_DIR)
@@ -65,9 +71,16 @@ class UpdateBinariesCommand(Command):
                         shutil.copytree(to_copy, dir_name)
                     else:
                         shutil.copy(to_copy, dir_name)
+            elif path.is_file() and path.suffix == ".gz":
+                with tarfile.open(name=path, mode="r:gz") as tar:
+                    subdir_and_files = [
+                        tarinfo for tarinfo in tar.getmembers()
+                        if tarinfo.name.startswith("./include")
+                    ]
+                    tar.extractall(path=PREBUILT_DIR, members=subdir_and_files)
 
     def initialize_options(self) -> None:
-        self.rebuild_binaries = True
+        self.build_binaries = BUILD_BINARIES
 
 
 def innit_checks():
@@ -109,6 +122,13 @@ def build_nova_physics():
             f"Builder script returned non-zero ({code}) error code. For troubleshooting guide, go to "
             f"https://github.com/gresm/nova-physics-python-fixed/blob/master/troubleshooting-guide.md"
         )
+
+
+NOVA_TO_LINK = Path("dummy/path")
+
+BUILD_BINARIES = "--dont-build-binaries" not in sys.argv
+if not BUILD_BINARIES:
+    sys.argv.remove("--dont-build-binaries")
 
 
 def get_nova_to_link():
@@ -154,10 +174,21 @@ def get_nova_sources():
     return sources
 
 
+def pre_build(self):
+    global NOVA_TO_LINK
+    innit_checks()
+    NOVA_TO_LINK = get_nova_to_link().relative_to(PACKAGE_DIR)
+    self._old_run()
+
+
+def generate_cmd_class(orig: Type[DistCommand]):
+    return type(f"Overriden{orig.__name__.capitalize()}", (orig,), {"run": pre_build, "_old_run": orig.run})
+
+
 def main():
     innit_checks()
 
-    nova_to_link = str(get_nova_to_link().relative_to(PACKAGE_DIR))
+    nova_to_link = str(NOVA_TO_LINK)
     stubs_to_override = {REAL_PACKAGE / "__init__.pyi": NOVA_PYTHON_STUB, REAL_PACKAGE / "_nova.pyi": NOVA_PYTHON_STUB}
 
     for write_to, read_from in stubs_to_override.items():
@@ -190,7 +221,10 @@ def main():
             "nova": ["*.pyi"]
         },
         packages=["nova"],
-        cmdclass={"update_binaries": UpdateBinariesCommand}
+        cmdclass={
+            "update_binaries": UpdateBinariesCommand,
+            "build_ext": generate_cmd_class(build_ext.build_ext)
+        }
     )
 
 
