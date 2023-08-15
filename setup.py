@@ -1,5 +1,5 @@
 import sys
-from typing import Type
+from typing import Type, Optional
 
 import os
 import shutil
@@ -125,6 +125,7 @@ def build_nova_physics():
 
 
 NOVA_TO_LINK = Path("dummy/path")
+EXTENSION: Optional[Extension] = None
 
 BUILD_BINARIES = "--dont-build-binaries" not in sys.argv
 if not BUILD_BINARIES:
@@ -178,6 +179,8 @@ def pre_build(self):
     global NOVA_TO_LINK
     innit_checks()
     NOVA_TO_LINK = get_nova_to_link().relative_to(PACKAGE_DIR)
+    if EXTENSION is not None:
+        EXTENSION.extra_objects = [str(NOVA_TO_LINK)]
     self._old_run()
 
 
@@ -186,6 +189,7 @@ def generate_cmd_class(orig: Type[DistCommand]):
 
 
 def main():
+    global EXTENSION
     innit_checks()
 
     nova_to_link = str(NOVA_TO_LINK)
@@ -203,6 +207,8 @@ def main():
         extra_objects=[nova_to_link],
         optional=False
     )
+
+    EXTENSION = extension
 
     print(
         "See https://github.com/gresm/nova-physics-python-fixed/blob/master/troubleshooting-guide.md if error occurred "
