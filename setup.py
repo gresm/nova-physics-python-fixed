@@ -224,7 +224,7 @@ def main():
         ext_modules=[extension],
         include_package_data=True,
         package_data={
-            "nova": ["*.pyi"]
+            "nova": ["*.pyi", "*.typed"]
         },
         packages=["nova"],
         cmdclass={

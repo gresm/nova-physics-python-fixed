@@ -1,1 +1,2 @@
-include nova/*.pyi
+global-include *.pyi
+global-include *.typed
