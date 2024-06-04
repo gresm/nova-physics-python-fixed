@@ -8,7 +8,7 @@ Nova Physics is a lightweight and easy to use 2D physics engine.
 </p>
 
 
-This is re-packaged Nova Physics Python bindings, as currently official bindings fail to build with ``pip install git+https://github.com/kadir014/nova-physics-python.git`` command and even though the docs say that there is pypi package called ``nova``, it is actually a different project.
+This is re-packaged Nova Physics Python bindings, as currently official bindings fail to build with ``pip install git+https://github.com/kadir014/nova-physics-python.git`` command.
 
 Install with ``pip install git+https://github.com/gresm/nova-physics-python-fixed.git``
 
