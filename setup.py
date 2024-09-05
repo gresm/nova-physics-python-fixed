@@ -12,20 +12,18 @@ from setuptools import setup, Extension
 
 
 if platform.system() == "Darwin":
-    # Fuck OSX
+    # ???
     import ssl
     ssl._create_default_https_context = ssl._create_unverified_context
 
 
 BUILD_WEB = False
-if "--web" in sys.argv:
+if "BUILD_WEB" in os.environ:
     BUILD_WEB = True
-    sys.argv.remove("--web")
 
 BUILD_NIGHTLY = False
-if "--nightly" in sys.argv:
+if "BUILD_NIGHTLY" in os.environ:
     BUILD_NIGHTLY = True
-    sys.argv.remove("--nightly")
 
 
 BASE_PATH = Path(os.getcwd())
