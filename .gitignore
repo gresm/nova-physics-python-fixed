@@ -2,3 +2,4 @@ build/
 dist/
 nova_physics.egg-info/
 __pycache__/
+/src
