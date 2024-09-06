@@ -1,5 +1,7 @@
 # Troubleshooting guide
 
+Not everything here is up-to-date.
+
 ## /usr/include/stdlib.h:26:10: fatal error: bits/libc-header-start.h: No such file or directory
 Also ``/usr/include/math.h:27:10: fatal error: bits/libc-header-start.h: No such file or directory``
 

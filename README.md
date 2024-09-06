@@ -22,3 +22,28 @@ By default, this uses a stable release of [Nova Physics](https://github.com/kadi
 ```shell
 BUILD_NIGHTLY=1 pip install git+https://github.com/gresm/nova-physics-python-fixed.git
 ```
+
+Example usage:
+```python
+import nova
+
+# Create the space
+space = nova.Space()
+
+# Create a body with box shape
+body = nova.RigidBody(
+    nova.RigidBodyType.DYNAMIC, # Type of the body
+    nova.Vector2(0, 0)          # Initial position of the body
+)
+
+# Add rectangle to the body.
+body.add_shape(nova.Shape.rect(5, 5))
+
+# Add body to the space
+space.add_rigidbody(body)
+
+# Main loop
+while True:
+    # Advance the simulation with the timestep of 60 times a second.
+    space.step(1 / 60)
+```

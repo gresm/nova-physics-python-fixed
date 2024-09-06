@@ -32,6 +32,10 @@ NOVA_PATH = BUILD_PATH / "nova-physics"
 VERSION = "1.0.0"
 
 
+with open("README.md") as _f:
+    LONG_DESCRIPTION = _f.read()
+
+
 def download(nightly: bool):
     """ Download the latest Nova Physics commit. """
 
@@ -71,26 +75,10 @@ if __name__ == "__main__":
         name = "nova-physics",
         version = VERSION,
         description = "Nova Physics Engine",
+        long_description=LONG_DESCRIPTION,
         setup_requires=["cffi>=1.0.0"],
         cffi_modules=["src/cffi_comp.py:ffibuilder"],
-        install_requires=["cffi>=1.0.0"]
+        install_requires=["cffi>=1.0.0"],
+        py_modules=["nova"],
+        package_dir={"": "src"},
     )
-
-
-    # Python 3.10 -> lib.win-amd64-3.10        / nova.cp310-win_amd64.pyd
-    # Python 3.11 -> lib.win-amd64-cpython-311 / nova.cp311-win_amd64.pyd
-    # generated = BASE_PATH / "build" / "lib.win-amd64-cpython-310" / "nova.cp310-win_amd64.pyd"
-
-    # if os.path.exists(generated):
-    #     print("Moving the compiled module as nova.pyd to working directory.")
-
-    #     # Copy extension build to working directory as "nova.pyd"
-    #     if os.path.exists(BASE_PATH / "nova.pyd"):
-    #         os.remove(BASE_PATH / "nova.pyd")
-
-    #     shutil.copyfile(generated, BASE_PATH / "nova.pyd")
-
-    #     print("Moved succesfully.")
-    #     print()
-
-    # print(f"Succesfully built Nova in {round(time() - start, 2)}s.")
